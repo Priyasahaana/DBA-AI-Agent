@@ -1,0 +1,82 @@
+{
+  "db_status": {
+    "sop_id": "SOP-DBA-001",
+    "title": "Database Health & Resource Triage",
+    "severity_threshold": {
+      "cpu_usage_percent": 85.0,
+      "memory_usage_percent": 90.0,
+      "disk_io_wait_percent": 25.0,
+      "replication_lag_seconds": 5.0
+    },
+    "diagnostic_steps": [
+      "Verify database status is ONLINE and check system uptime to rule out recent crash loops.",
+      "Evaluate CPU, memory, and disk I/O wait percentages against severity thresholds.",
+      "If DB status is ONLINE and CPU is normal (<85%), inspect active connections and blocking locks before investigating query plans."
+    ],
+    "recommended_actions": [
+      "If CPU > 85% with high disk I/O wait, inspect long-running SELECT queries for full table scans.",
+      "Escalate to Infrastructure On-Call if status is OFFLINE or replication lag exceeds 30 seconds."
+    ],
+    "requires_human_approval": false
+  },
+  "connection_exhaustion": {
+    "sop_id": "SOP-DBA-002",
+    "title": "High Connection Utilization & Pool Exhaustion",
+    "severity_threshold": {
+      "connection_utilization_percent": 85.0,
+      "max_idle_connection_ratio_percent": 70.0
+    },
+    "diagnostic_steps": [
+      "Compare active_connections against max_connections.",
+      "Check waiting_for_lock count: if high, connection buildup is a secondary symptom of blocking locks.",
+      "If waiting_for_lock is 0 and idle_connections > 70% of total, identify the application holding leaked connections."
+    ],
+    "recommended_actions": [
+      "If caused by blocking locks, follow SOP-DBA-003 (Blocking Locks) first.",
+      "If caused by leaked idle connections from a single service, terminate idle sessions older than 15 minutes and notify the service owner to verify PgBouncer/connection pool settings."
+    ],
+    "disruptive_action": "terminate_idle_connections",
+    "requires_human_approval": true
+  },
+  "blocking_locks": {
+    "sop_id": "SOP-DBA-003",
+    "title": "Resolving Blocking Locks & Long-Running Transactions",
+    "severity_threshold": {
+      "min_blocked_sessions": 3,
+      "max_transaction_duration_seconds": 300
+    },
+    "diagnostic_steps": [
+      "Identify the root blocking PID (blocking_pid) and check its state and transaction_duration_seconds.",
+      "Verify how many downstream sessions (blocked_pids) are waiting on the lock.",
+      "Check whether the blocking session is 'idle in transaction' or executing a DDL/DML statement on a critical table."
+    ],
+    "safety_guardrails": [
+      "NEVER terminate system background processes or replication walsender PIDs.",
+      "Do not terminate batch jobs automatically without human DBA approval.",
+      "Prefer pg_terminate_backend(pid) only when transaction_duration_seconds > 300 and blocked_session_count >= 3."
+    ],
+    "recommended_actions": [
+      "Propose terminating the blocking session using terminate_blocking_session(pid) to immediately release downstream locks.",
+      "Advise the owning application team to add statement_timeout and idle_in_transaction_session_timeout."
+    ],
+    "disruptive_action": "terminate_blocking_session",
+    "requires_human_approval": true
+  },
+  "slow_queries": {
+    "sop_id": "SOP-DBA-004",
+    "title": "Slow Query & High CPU Investigation",
+    "severity_threshold": {
+      "query_duration_seconds": 60
+    },
+    "diagnostic_steps": [
+      "Inspect slow_queries for queries running longer than 60 seconds.",
+      "Check wait_event_type: 'Lock' indicates lock contention (refer to SOP-DBA-003); 'IO' or 'CPU' indicates missing indexes or unoptimized scans."
+    ],
+    "recommended_actions": [
+      "For non-critical analytical queries causing >90% CPU, propose cancelling the query via pg_cancel_backend(pid).",
+      "Recommend running EXPLAIN ANALYZE and creating concurrent indexes for wildcard or unindexed filters."
+    ],
+    "disruptive_action": "cancel_slow_query",
+    "requires_human_approval": true
+  }
+}

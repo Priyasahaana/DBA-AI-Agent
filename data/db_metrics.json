@@ -1,0 +1,148 @@
+{
+  "active_scenario": "blocking_locks_incident",
+  "scenarios": {
+    "blocking_locks_incident": {
+      "db_health": {
+        "status": "ONLINE",
+        "version": "PostgreSQL 16.2",
+        "uptime": "42 days, 14 hours, 18 minutes",
+        "cpu_usage_percent": 48.5,
+        "memory_usage_percent": 76.2,
+        "disk_io_wait_percent": 4.1,
+        "replication_lag_seconds": 0.2
+      },
+      "connections": {
+        "max_connections": 100,
+        "active_connections": 95,
+        "idle_connections": 3,
+        "idle_in_transaction": 1,
+        "waiting_for_lock": 12,
+        "top_client_apps": [
+          { "application_name": "checkout-service", "count": 64 },
+          { "application_name": "reporting-batch", "count": 21 },
+          { "application_name": "auth-service", "count": 10 }
+        ]
+      },
+      "blocking_locks": {
+        "has_blocking_locks": true,
+        "blocked_session_count": 12,
+        "blocking_sessions": [
+          {
+            "blocking_pid": 48291,
+            "usename": "batch_etl_user",
+            "application_name": "reporting-batch",
+            "client_addr": "10.24.18.42",
+            "state": "idle in transaction",
+            "transaction_duration_seconds": 1845,
+            "query": "BEGIN; UPDATE orders SET archive_flag = true WHERE created_at < '2025-01-01';",
+            "lock_type": "ExclusiveLock",
+            "locked_relation": "orders",
+            "blocked_pids": [48302, 48305, 48309, 48311, 48314, 48319, 48322, 48328, 48330, 48335, 48340, 48344],
+            "can_terminate_safely": true
+          }
+        ]
+      },
+      "slow_queries": [
+        {
+          "pid": 48302,
+          "duration_seconds": 412,
+          "wait_event_type": "Lock",
+          "wait_event": "relation",
+          "query": "UPDATE orders SET status = 'PAID' WHERE order_id = $1;"
+        }
+      ]
+    },
+    "connection_pool_exhaustion": {
+      "db_health": {
+        "status": "ONLINE",
+        "version": "PostgreSQL 16.2",
+        "uptime": "19 days, 06 hours, 11 minutes",
+        "cpu_usage_percent": 31.0,
+        "memory_usage_percent": 89.4,
+        "disk_io_wait_percent": 1.8,
+        "replication_lag_seconds": 0.1
+      },
+      "connections": {
+        "max_connections": 100,
+        "active_connections": 100,
+        "idle_connections": 82,
+        "idle_in_transaction": 0,
+        "waiting_for_lock": 0,
+        "top_client_apps": [
+          { "application_name": "legacy-inventory-api", "count": 85 },
+          { "application_name": "checkout-service", "count": 15 }
+        ]
+      },
+      "blocking_locks": {
+        "has_blocking_locks": false,
+        "blocked_session_count": 0,
+        "blocking_sessions": []
+      },
+      "slow_queries": []
+    },
+    "high_cpu_missing_index": {
+      "db_health": {
+        "status": "DEGRADED",
+        "version": "PostgreSQL 16.2",
+        "uptime": "65 days, 02 hours, 50 minutes",
+        "cpu_usage_percent": 96.8,
+        "memory_usage_percent": 68.0,
+        "disk_io_wait_percent": 38.5,
+        "replication_lag_seconds": 4.7
+      },
+      "connections": {
+        "max_connections": 100,
+        "active_connections": 44,
+        "idle_connections": 10,
+        "idle_in_transaction": 0,
+        "waiting_for_lock": 0,
+        "top_client_apps": [
+          { "application_name": "analytics-dashboard", "count": 30 },
+          { "application_name": "checkout-service", "count": 14 }
+        ]
+      },
+      "blocking_locks": {
+        "has_blocking_locks": false,
+        "blocked_session_count": 0,
+        "blocking_sessions": []
+      },
+      "slow_queries": [
+        {
+          "pid": 51092,
+          "duration_seconds": 195,
+          "wait_event_type": "IO",
+          "wait_event": "DataFileRead",
+          "query": "SELECT * FROM order_events WHERE customer_email LIKE '%@example.com' ORDER BY event_time DESC;"
+        }
+      ]
+    },
+    "healthy_baseline": {
+      "db_health": {
+        "status": "ONLINE",
+        "version": "PostgreSQL 16.2",
+        "uptime": "42 days, 15 hours, 00 minutes",
+        "cpu_usage_percent": 18.2,
+        "memory_usage_percent": 54.0,
+        "disk_io_wait_percent": 0.9,
+        "replication_lag_seconds": 0.0
+      },
+      "connections": {
+        "max_connections": 100,
+        "active_connections": 22,
+        "idle_connections": 14,
+        "idle_in_transaction": 0,
+        "waiting_for_lock": 0,
+        "top_client_apps": [
+          { "application_name": "checkout-service", "count": 15 },
+          { "application_name": "auth-service", "count": 7 }
+        ]
+      },
+      "blocking_locks": {
+        "has_blocking_locks": false,
+        "blocked_session_count": 0,
+        "blocking_sessions": []
+      },
+      "slow_queries": []
+    }
+  }
+}

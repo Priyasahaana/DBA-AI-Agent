@@ -1,0 +1,14 @@
+[project]
+name = "dba-ai-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "langchain>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langgraph>=0.2.35",
+    "pydantic>=2.9.0",
+    "pytest>=8.3.0",
+    "python-dotenv>=1.0.1",
+]
